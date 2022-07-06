@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import firebase from "firebase";
 import { storage, db } from "./firebase";
+import {  ref, getDownloadURL } from "firebase/storage";
 import "./ImageUpload.css";
 import { Input, Button } from "@material-ui/core";
 import instance from "./axios.js";
@@ -13,12 +14,15 @@ const ImageUpload = ({ username }) => {
   const [caption, setCaption] = useState("");
 
   const handleChange = (e) => {
+    console.log(e.target.files[0])
     if (e.target.files[0]) {
-      setImage(e.target.files[0]);
+        setImage(e.target.files[0]);
     }
   };
 
   const handleUpload = () => {
+    console.log(image);
+    //Create a reference to uploaded image
     const uploadTask = storage.ref(`images/${image.name}`).put(image);
     uploadTask.on(
       "state_changed",
@@ -41,32 +45,31 @@ const ImageUpload = ({ username }) => {
           .getDownloadURL()
           .then((newUrl) => {
             setUrl(newUrl);
-            if(url !== ''){
-              console.log(url)
-              //Call to server
-              instance.post('/upload',{
-                caption:caption,
-                user:username,
-                image:url,
-              })
-  
-              // post image inside db
-              db.collection("posts").add({
-                imageUrl: url,
-                caption: caption,
-                username: username,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-              });
-  
-            }
+            instance.post('/upload',{
+              caption:caption,
+              user:username,
+              image:newUrl,
+            })
+
+        // post image inside db
+        db.collection("posts").add({
+          imageUrl: newUrl,
+          caption: caption,
+          username: username,
+          timestamp: firebase.
+          firestore.FieldValue.
+          serverTimestamp(),
+        });
 
             setProgress(0);
             setCaption("");
             setImage(null);
+
+          })
           });
       }
-    );
-  };
+
+
 
   return (
     <div className="imageupload">

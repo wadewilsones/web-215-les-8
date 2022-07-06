@@ -85,7 +85,7 @@ function App() {
 
   useEffect(() => {
     fetchPosts();
-  }, []);
+  }, [posts]);
 
   const handleLogin = (e) => {
     e.preventDefault();
