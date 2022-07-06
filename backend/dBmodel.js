@@ -1,18 +1,10 @@
 import mongoose from "mongoose";
 
-const { Schema } = mongoose;
-
-
-const post = new Schema({
-    username:String,
-    userIcon:String,
-    likes: Number,
-    comments: [],
-    descr: String,
+const postDb = mongoose.Schema({
+    caption:String,
+    user:String,
     image:String,
 });
 
-const postDb = mongoose.model('makePost', post);
 
-
-export default postDb 
+export default mongoose.model('postDb', postDb); 

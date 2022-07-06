@@ -3,9 +3,7 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import Pusher from 'pusher';
 import 'dotenv/config';
-import {postDb } from './dBmodel.js';  
-
-
+import postDb from './dBmodel.js';  
 
 const app = express();
 const port = process.env.PORT;
@@ -14,23 +12,6 @@ const port = process.env.PORT;
 
 app.use(cors());
 app.use(express.json());
-
-//APIs
-app.get('/', (req, res) => {
-    res.status(200).send('Hello!')
-})
-
-app.get('/showPosts', (req, res) => {
-    postDb.find({},(err, data) => {
-        if(err){
-            res.status(500).send(err)
-        }
-        else{
-            res.status(201).send(data)
-        }
-    })
-})
-
 
 //Pusher 
 
@@ -47,43 +28,20 @@ const pusher = new Pusher({
     message: "hello world"
   });
 
-//Create user
 
-app.post('/signup', (req,res) => {
-    const newUserData = req.body;
-    console.log(newUserData);
-    userDb.create(newUserData, (err, data) => {
-        if(err){
-            res.status(500).send(err)
-        }
-        else{
-            res.status(201).send('Success')
-        }
-    })
+
+//APIs
+app.get('/', (req, res) => {
+    res.status(200).send('Hello!')
 })
 
-//Login user 
 
-app.post('/login', (req,res) => {
-    const newUserData = req.body;
-    userDb.find(newUserData, (err, data) => {
-        if(err){
-            res.status(500).send(err)
-        }
-        else{
-            const loggedUser = {
-                username:newUserData.username,
-                logingStatus:true
-            }
-            res.status(201).send(loggedUser)
-        }
-    })
-})
 
 //Upload Image
 
-app.post('/uploadImage', (req,res) => {
+app.post('/upload', (req,res) => {
     const userData = req.body;
+    console.log(userData)
     postDb.create(userData, (err, data) => {
         if(err){
             res.status(500).send(err)
@@ -94,8 +52,8 @@ app.post('/uploadImage', (req,res) => {
     })
 })
 
-app.get('/sync', (req, res) => {
-    postDb.find((err, data) => {
+app.get('/showPosts', (req, res) => {
+    postDb.find({},(err, data) => {
         if(err){
             res.status(500).send(err)
         }
@@ -104,7 +62,6 @@ app.get('/sync', (req, res) => {
         }
     })
 })
-
 
 //DB congig
 const dbUrl = process.env.DB_URL;
@@ -124,9 +81,9 @@ mongoose.connection.once('open', () => {
             console.log('Triggering Pusher **IMG UPLOAD**')
 
             const postDetails = change.fullDocument;
-            pusher.trigger('posts', 'insert', {
-                username:postDetails.username,
-                descr:postDetails.descr,
+            pusher.trigger('posts', 'inserted', {
+                caption:postDetails.caption,
+                user:postDetails.username,
                 image:postDetails.image
             })
            
