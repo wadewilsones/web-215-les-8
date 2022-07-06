@@ -2,10 +2,11 @@ import React, { useState, useEffect } from "react";
 import "./App.css";
 import Post from "./Post";
 import ImageUpload from "./ImageUpload";
-import { db, auth } from "./firebase";
+import { auth } from "./firebase";
 import { Button, Avatar, makeStyles, Modal, Input } from "@material-ui/core";
 import FlipMove from "react-flip-move";
-import InstagramEmbed from "react-instagram-embed";
+import instance from "./axios.js";
+import Pusher from 'pusher-js';
 
 function getModalStyle() {
   const top = 50;
@@ -42,11 +43,17 @@ function App() {
   const [open, setOpen] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
 
+  const fetchPosts = async () => { 
+    await instance.get('/showPosts').then(response => {
+    console.log(response);
+    setPosts(response.data)
+  })}
+  
+
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((authUser) => {
       if (authUser) {
         // user is logged in...
-        console.log(authUser);
         setUser(authUser);
 
         if (authUser.displayName) {
@@ -67,11 +74,17 @@ function App() {
   }, [user, username]);
 
   useEffect(() => {
-    db.collection("posts")
-      .orderBy("timestamp", "desc")
-      .onSnapshot((snapshot) =>
-        setPosts(snapshot.docs.map((doc) => ({ id: doc.id, post: doc.data() })))
-      );
+    const pusher = new Pusher('fb7ba128897cfbafeea2', {
+      cluster: 'mt1'
+    });
+    const channel = pusher.subscribe('my-channel');
+    channel.bind('inserted', function(data) {
+      fetchPosts();
+    });
+  })
+
+  useEffect(() => {
+    fetchPosts();
   }, []);
 
   const handleLogin = (e) => {
@@ -180,31 +193,17 @@ function App() {
       <div className="app__posts">
         <div className="app__postsLeft">
           <FlipMove>
-            {posts.map(({ id, post }) => (
+            {posts.map((post) => (
               <Post
-                user={user}
-                key={id}
-                postId={id}
-                username={post.username}
+                user={post.user}
+                key={post._id}
+                postId={post._id}
+                username={post.user}
                 caption={post.caption}
-                imageUrl={post.imageUrl}
+                imageUrl={post.image}
               />
             ))}
           </FlipMove>
-        </div>
-        <div className="app__postsRight">
-          <InstagramEmbed
-            url="https://www.instagram.com/p/B_uf9dmAGPw/"
-            maxWidth={320}
-            hideCaption={false}
-            containerTagName="div"
-            protocol=""
-            injectScript
-            onLoading={() => {}}
-            onSuccess={() => {}}
-            onAfterRender={() => {}}
-            onFailure={() => {}}
-          />
         </div>
       </div>
 

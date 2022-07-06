@@ -3,6 +3,8 @@ import firebase from "firebase";
 import { storage, db } from "./firebase";
 import "./ImageUpload.css";
 import { Input, Button } from "@material-ui/core";
+import instance from "./axios.js";
+
 
 const ImageUpload = ({ username }) => {
   const [image, setImage] = useState(null);
@@ -37,16 +39,26 @@ const ImageUpload = ({ username }) => {
           .ref("images")
           .child(image.name)
           .getDownloadURL()
-          .then((url) => {
-            setUrl(url);
-
-            // post image inside db
-            db.collection("posts").add({
-              imageUrl: url,
-              caption: caption,
-              username: username,
-              timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-            });
+          .then((newUrl) => {
+            setUrl(newUrl);
+            if(url !== ''){
+              console.log(url)
+              //Call to server
+              instance.post('/upload',{
+                caption:caption,
+                user:username,
+                image:url,
+              })
+  
+              // post image inside db
+              db.collection("posts").add({
+                imageUrl: url,
+                caption: caption,
+                username: username,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+              });
+  
+            }
 
             setProgress(0);
             setCaption("");
